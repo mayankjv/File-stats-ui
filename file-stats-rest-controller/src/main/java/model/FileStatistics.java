@@ -43,6 +43,7 @@ public class FileStatistics{
 		System.out.println(allPaths.size());
 		curr++;
 	}
+	
 	//Main method 
 	public void execute(String folderName) throws IOException, InterruptedException{
 		
@@ -57,6 +58,8 @@ public class FileStatistics{
 					}
 				}
 			}
+	}
+/*			
 			//Condition when a user wants the files listed in a sorted manner.
 			else if(mainMenu == 2){
 				if(choice ==1) {
@@ -75,11 +78,13 @@ public class FileStatistics{
 					result = temp;
 				}
 			}
-			//When the user wants to search for a file
+			
+*/
+			
+/*			//When the user wants to search for a file
 			else if(choice == 3){
 				ArrayList<DirectoryFile> search_results = new ArrayList<DirectoryFile>();
 				ArrayList<DirectoryFile> temp= path_.get_files();				
-				if(valueSearch==-1) {
 					KMPSearch obj = new KMPSearch();
 					for(int i=0;i<temp.size();i++){
 						int[] arr= obj.kmp(temp.get(i).get_file_name().toCharArray(), searchString.toCharArray());
@@ -88,19 +93,10 @@ public class FileStatistics{
 						}
 					}		
 					result = search_results;
-				}
-				else {
-					for(int i=0;i<temp.size();i++){
-						if(temp.get(i).get_size()>valueSearch){
-							search_results.add(temp.get(i));
-						}
-					}
-					result = search_results;
-				}
 			}
 			else
 				result = new ArrayList<DirectoryFile>();
-	}
+*/
 
 
  
@@ -145,6 +141,20 @@ public class FileStatistics{
 		choice=this.choice;		
 		searchString=this.searchString;
 		valueSearch= value;
+	}
+	public ArrayList<DirectoryFile> getSearchResults(String pattern, String folderName) {
+		PathMap path_= path.get(folderName);
+		ArrayList<DirectoryFile> search_results = new ArrayList<DirectoryFile>();
+		ArrayList<DirectoryFile> temp= path_.get_files();				
+			KMPSearch obj = new KMPSearch();
+			for(int i=0;i<temp.size();i++){
+				int[] arr= obj.kmp(temp.get(i).get_file_name().toCharArray(), pattern.toCharArray());
+				if(arr.length!=0){
+					search_results.add(temp.get(i));
+				}
+			}		
+			return search_results;
+
 	}
  
 }
