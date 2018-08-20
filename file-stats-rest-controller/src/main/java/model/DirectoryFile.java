@@ -18,7 +18,7 @@ public class DirectoryFile{
 	private long words;
 	private long size;
 	private long last_modified; 
-	private ArrayList<String> tokens;
+	private HashMap<String,Integer> tokens= new HashMap<String,Integer>();
 
 	//A non-parameterised constructor used to instantiate an object that is used to invoke functions in other classes
 	DirectoryFile(){
@@ -76,7 +76,7 @@ public class DirectoryFile{
 		return words;
 	}
 	//Getter method for tokens in the file
-	public ArrayList<String> get_tokens(){
+	public HashMap<String,Integer> get_tokens(){
 		return tokens;
 	}
 	////Getter method for the size of the file
@@ -112,7 +112,12 @@ public class DirectoryFile{
 				words_= temp.split("\\s+");
 				words+= words_.length;
 				for(String word : words_) {
-					tokens.add(word);
+					if(tokens.containsKey(word)) {
+						int curr= tokens.get(word);
+						tokens.put(word,curr+1 );
+					}
+					else
+						tokens.put(word, 1);
 				}
 			}
 			catch(NullPointerException e){
