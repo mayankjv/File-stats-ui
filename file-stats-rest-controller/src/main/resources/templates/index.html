@@ -1,0 +1,352 @@
+<! DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<title>File Statistics</title>
+	</head>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+	<style>
+	
+		ul {
+		    list-style-type: none;
+		    margin: 0;
+		    padding: 0;
+		    overflow: hidden;
+		    background-color: #333;
+		}
+		
+		li {
+		    float: left;
+		    border-right:1px solid #bbb;
+		}
+		
+		li:last-child {
+		    border-right: none;
+		}
+		
+		li a {
+		    display: block;
+		    color: white;
+		    text-align: center;
+		    padding: 14px 16px;
+		    text-decoration: none;
+		}
+		
+		li a:hover:not(.active) {
+		    background-color: #111;
+		}
+		
+		.active {
+		    background-color: #4CAF50;
+		}
+	
+	
+		table {
+ 	   		font-family: arial, sans-serif;
+ 	   		border-collapse: collapse;
+ 	   		width: 100%;
+		}
+
+		td, th {
+ 	   		border: 1px solid #dddddd;
+  	  		text-align: left;
+  	  		padding: 8px;
+		}
+		tr:nth-child(even) {
+	    	background-color: #dddddd;
+		}
+	</style>
+	<body class="container">
+<!-- 
+		<ul>
+		  <li><a href="javascript:showEnterPath()">Add Path</a></li>
+		  <li><a href="javascript:showAllPaths()">Show Directories</a></li>
+		</ul>
+		
+		<br><br>
+		<button type="button" onclick='back()' id='back btn' hidden>Back</button>
+		
+		
+		<div id="myDiv" hidden>
+ 			Add Directory Path: <br><br>
+  			<input type="text" id="input_path"><br><br>
+  			<button type="button" onclick='addPath()' >Add Path</button>
+		</div>
+				
+		<div id="folders">
+		</div>
+		
+		<table  id='table tbody'>
+		</table>
+ -->
+ 
+ 		<br>	
+		 <div class="row">
+		 
+		  <div class="col-md-12">Enter Directory:</div>
+		</div>
+		 <br>	
+		 <div class="row">
+		 
+		  <div class="col-md-12"><input type="text" class="form-control" id="input_path"></div>
+		</div>
+		<br>
+		 <div class="row">
+		 
+		  <div class="col-md-12"><button type="button" class="btn btn-primary" onclick='addPath()' >Add Path</button></div>
+		</div>
+
+		
+		<!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
+		<br>
+		<div class="row">
+		  <div class="col-md-12"><button type="button" class="btn btn-primary btn-block" onclick='showAllPaths()' >Show Folders</button></div>
+		</div>
+		
+		<!-- Columns are always 50% wide, on mobile and desktop -->
+		<br>
+		<div class="row">
+		  <div class="col-md-10"><input type="text" class="form-control" id="search_text"></div>
+		  <div class="col-md-2"><button type="button" class="btn btn-dark" onclick='#' >Search</button></div>
+		</div>
+		<br>
+		<div class="row" >
+		  <div class="col-md-2"><button type="button" class="btn btn-primary  btn-block" onclick='back()' >Back</button></div>
+		</div>
+
+		<br>
+		<div class="row">
+			<div class="col-md-9">
+				<table class="table" id="table tbody">
+				</table>
+			</div>
+			<div class="col-md-3">
+				<div class="list-group" id="folders">
+				</div>			
+			</div>
+ 
+ 		</div>
+	</body>
+		<!-- jQuery library -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		
+		<!-- Popper JS -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+		
+		<!-- Latest compiled JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+		<script>
+	var backPath = [""];
+		function showEnterPath(){
+			document.getElementById("myDiv").style.display='block';
+			document.getElementById("table tbody").style.visibility='hidden';
+			document.getElementById("back btn").style.visibility='hidden';
+			document.getElementById("folders").style.visibility='hidden';
+		}
+		
+		function addPath(){
+			var show= new XMLHttpRequest();
+			show.onreadystatechange= resp;
+			var path_= document.getElementById("input_path").value;
+			var res_= path_.replace(/\\/g,"/");
+			show.open("GET","/addPath?path="+res_,true);
+			show.send();
+		}
+		function resp(){
+			if(this.readyState == 4 && this.status == 200){
+				alert("New Path added")
+			}
+		}
+		
+		
+		function showAllPaths(){
+			document.getElementById("folders").innerHTML="";
+			var folderRequest= new XMLHttpRequest();
+			folderRequest.onreadystatechange= folderResponse;
+			folderRequest.open("GET","/allFolders",true);
+			folderRequest.send();
+		}
+		function folderResponse(){
+			if(this.readyState == 4 && this.status == 200){
+				if(jQuery.isEmptyObject(this.responseText))
+					alert("No Folders to show");
+				else{
+					var json = this.responseText;
+					var data = JSON.parse(json);
+					for(var ij in data){
+	
+						document.getElementById("folders").innerHTML=document.getElementById("folders").innerHTML+ "<a href=\"#\"  class=\"list-group-item list-group-item-action\"  onclick='showFilesInThisFolder(\""+data[ij]+"\")'>"+ data[ij] +"</a>";
+					}
+				}
+			}
+		}
+		function back(){
+			if(backPath.length == 1){
+				
+			}
+			else{
+				backPath.pop();
+				showFilesInThisFolder(backPath[backPath.length-1]);
+			}
+		}
+		function showFilesInThisFolder(data){
+			if(backPath.indexOf(data)==-1)
+				backPath.push(data);
+			emptyTable();
+			var xhttp= new XMLHttpRequest();
+			xhttp.onreadystatechange= xresp;
+			xhttp.open("GET","/filesInThisFolder?folder_name="+data,true);
+			xhttp.send();
+		}
+		function xresp(data){
+			if(this.readyState == 4 && this.status == 200){
+				//document.getElementById("folders").innerHTML= this.responseText;
+				var json = this.responseText;
+				var data_ = JSON.parse(json);
+				document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<thead class=\"thead-dark\"><tr><th>"+"<a href=\"#\" onclick='sortTableByName()'>File Name<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByType()'>Type<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableBySize()'>Size<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByWords()'>Word Count<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByLines()'>Line Count<//a>"+"</th></tr></thead>";
+				for(var ij in data_) {
+					if(data_[ij]._type=="Folder"){
+						document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td><a href=\"#\" onclick='showFilesInThisSubFolder(\""+data_[ij]._file_name+"\")'>"+ data_[ij]._file_name +"</a>"+"</td><td>"+data_[ij]._type+"</td></tr>";
+					}
+					else{
+						document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td>"+data_[ij]._file_name+"</td><td>"+data_[ij]._type+"</td><td>"+data_[ij]._size+"</td><td>"+data_[ij]._words+"</td><td>"+data_[ij]._lines+"</td></tr>";
+					}				
+				}
+			}
+			
+		}
+		
+		function emptyTable(){
+			document.getElementById("table tbody").innerHTML="";
+		}
+		
+
+		function showFilesInThisSubFolder(data){
+			if(backPath.indexOf(data)==-1)
+				backPath.push(data);
+			emptyTable();
+			var xhttp= new XMLHttpRequest();
+			xhttp.onreadystatechange= xresp;
+			xhttp.open("GET","/filesInThisFolder?folder_name="+data,true);
+			xhttp.send();
+		}
+		
+
+		
+		function sortTableByName() {
+			  var table, rows, switching, i, x, y, shouldSwitch;
+			  table = document.getElementById("table tbody");
+			  switching = true;
+			  while (switching) {
+			    switching = false;
+			    rows = table.rows;
+			    for (i = 1; i < (rows.length - 1); i++) {
+			      shouldSwitch = false;
+			      x = rows[i].getElementsByTagName("TD")[0];
+			      y = rows[i + 1].getElementsByTagName("TD")[0];
+			      if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+			        shouldSwitch = true;
+			        break;
+			      }
+			    }
+			    if (shouldSwitch) {
+			      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			      switching = true;
+			    }
+			  }
+			}
+		function sortTableByType() {
+			  var table, rows, switching, i, x, y, shouldSwitch;
+			  table = document.getElementById("table tbody");
+			  switching = true;
+			  while (switching) {
+			    switching = false;
+			    rows = table.rows;
+			    for (i = 1; i < (rows.length - 1); i++) {
+			      shouldSwitch = false;
+			      x = rows[i].getElementsByTagName("TD")[1];
+			      y = rows[i + 1].getElementsByTagName("TD")[1];
+			      if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+			        shouldSwitch = true;
+			        break;
+			      }
+			    }
+			    if (shouldSwitch) {
+			      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			      switching = true;
+			    }
+			  }
+			}
+		function sortTableBySize() {
+			  var table, rows, switching, i, x, y, shouldSwitch;
+			  table = document.getElementById("table tbody");
+			  switching = true;
+			  while (switching) {
+			    switching = false;
+			    rows = table.rows;
+			    for (i = 1; i < (rows.length - 1); i++) {
+			      shouldSwitch = false;
+			      x = rows[i].getElementsByTagName("TD")[2];
+			      y = rows[i + 1].getElementsByTagName("TD")[2];
+			      if (Number(x.innerHTML) > Number(y.innerHTML)) {
+			        shouldSwitch = true;
+			        break;
+			      }
+			    }
+			    if (shouldSwitch) {
+			      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			      switching = true;
+			    }
+			  }
+			}
+		function sortTableByWords() {
+			  var table, rows, switching, i, x, y, shouldSwitch;
+			  table = document.getElementById("table tbody");
+			  switching = true;
+			  while (switching) {
+			    switching = false;
+			    rows = table.rows;
+			    for (i = 1; i < (rows.length - 1); i++) {
+			      shouldSwitch = false;
+			      x = rows[i].getElementsByTagName("TD")[3];
+			      y = rows[i + 1].getElementsByTagName("TD")[3];
+			      if (Number(x.innerHTML) > Number(y.innerHTML)) {
+			        shouldSwitch = true;
+			        break;
+			      }
+			    }
+			    if (shouldSwitch) {
+			      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			      switching = true;
+			    }
+			  }
+			}
+		function sortTableByLines() {
+			  var table, rows, switching, i, x, y, shouldSwitch;
+			  table = document.getElementById("table tbody");
+			  switching = true;
+			  while (switching) {
+			    switching = false;
+			    rows = table.rows;
+			    for (i = 1; i < (rows.length - 1); i++) {
+			      shouldSwitch = false;
+			      x = rows[i].getElementsByTagName("TD")[4];
+			      alert(typeof(x));
+			      y = rows[i + 1].getElementsByTagName("TD")[4];
+			      if (Number(x.innerHTML) > Number(y.innerHTML)) {
+			        shouldSwitch = true;
+			        break;
+			      }
+			    }
+			    if (shouldSwitch) {
+			      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			      switching = true;
+			    }
+			  }
+			}
+
+		
+		
+		
+
+	</script>
+</html>
