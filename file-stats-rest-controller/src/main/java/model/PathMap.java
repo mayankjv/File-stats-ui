@@ -1,23 +1,27 @@
 package model;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 
-
-
 //This class stores the path string and all the files in a given path. A separate class is created for this because the user might need to switch between paths.
-class PathMap{
+public class PathMap{
 	public String path_string;
 	public ArrayList<DirectoryFile> files= new ArrayList<DirectoryFile>();
 	HashMap<String,ArrayList<DirectoryFile>> folder_to_files = new HashMap<String,ArrayList<DirectoryFile>>();
 	int i;
+	public String indexFilePath="C:\\Users\\mayank.patel\\Desktop\\Java Projects\\Assignment_2\\file-stats-rest-controller\\Index";
 
 	PathMap(String path_to_folder){
 		path_string= path_to_folder;
 		i=0;
 		store_file_list(path_string);
+		dumpInFile();
 	}
 
 	//This method traverses through the folders and the subfolders and stores all the files that are present in an ArrayList
@@ -95,6 +99,21 @@ class PathMap{
 	}
 */
 
+	public void dumpInFile()
+    {
+       try {
+           ObjectOutputStream objStream1 = new ObjectOutputStream(new FileOutputStream(new File(indexFilePath+"\\indexed.json")));
+           objStream1.writeObject(folder_to_files);
+           objStream1.close();
+       }
+       catch(Exception e)
+       {
+           System.out.println(e);
+       }
+    }
+
+	
+	
 	//public method that will help the user to get the list of the files present in a given path_string.
 
 	public ArrayList<DirectoryFile> get_files(){
@@ -120,6 +139,59 @@ class PathMap{
     { 
 		return (int)(new DirectoryFile(new File(this.path_string))).get_last_modified();
     }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public void modify_file_list(String name,String path, int kind){
+		try {
+			if(kind == 0){
+				File file= new File(path);
+				if(file.isDirectory()) {
+					if(kind == 2)
+						return;
+					folder_to_files.put(path, new ArrayList<DirectoryFile>());
+					return;
+				}
+				DirectoryFile to_be_added= new DirectoryFile(file);
+				String pm = path.substring(0, path.indexOf(name));
+				files.add(to_be_added);
+				ArrayList<DirectoryFile> ret= new ArrayList<DirectoryFile>();
+				folder_to_files.put(pm, ret);
+			}
+			else if(kind == 1){
+				File file= new File("");
+				file= new File(path);
+				if(folder_to_files.containsKey(new PathMap(path))) {
+					folder_to_files.remove(new PathMap(path));
+					return;
+				}
+				DirectoryFile to_be_deleted= new DirectoryFile(file);
+				String pm= path.substring(0,path.lastIndexOf("\\"));
+				for(DirectoryFile fil: files){
+					if((fil.get_file_name()+"."+fil.get_type()).equals(name)){
+						files.remove(fil);
+						//files.add(to_be_deleted);
+						break;				
+					}
+				}
+				ArrayList<DirectoryFile> ret = folder_to_files.get(pm);
+				ret.remove(to_be_deleted);
+				folder_to_files.put(pm, ret);
+			}
+		}
+		catch(Exception e) {
+		}
+	}
+
 }
+
+
+
 
 
