@@ -18,10 +18,6 @@ public class FileStatistics{
 
 	HashSet<String> allPaths;
 	HashMap<String,PathMap> path;
-	private int mainMenu;
-	private int choice;
-	String searchString;
-	int valueSearch;
 	ArrayList<DirectoryFile> result;
 	int curr;
 	
@@ -29,8 +25,6 @@ public class FileStatistics{
 		path= new HashMap<>();
 		allPaths= new HashSet<String>();
 		curr=0;
-		mainMenu=1;
-		choice=-1;
 	}
 	public void addNewPath(String pathString) {
 		PathMap newPath= new PathMap(pathString);
@@ -49,13 +43,11 @@ public class FileStatistics{
 		
 			PathMap path_ = path.get(folderName);
 			HashMap<String,ArrayList<DirectoryFile>> map =path_.get_map();
-			if(mainMenu == 1) {
-				result= map.get(path_.path_string);
-//				result = path_.get_files();
-				for(DirectoryFile directoryFile: result) {
-					if(directoryFile.get_size()==-1) {
-						addNewPath(path_.path_string+"\\\\"+directoryFile.get_file_name());
-					}
+			result= map.get(path_.path_string);
+//			result = path_.get_files();
+			for(DirectoryFile directoryFile: result) {
+				if(directoryFile.get_size()==-1) {
+					addNewPath(path_.path_string+"\\\\"+directoryFile.get_file_name());
 				}
 			}
 	}
@@ -125,7 +117,34 @@ public class FileStatistics{
  		}
  	}
  	
- 	
+	public ArrayList<DirectoryFile> getSearchResults(String pattern, String folderName) {
+		PathMap path_= path.get(folderName);
+		ArrayList<DirectoryFile> search_results = new ArrayList<DirectoryFile>();
+		ArrayList<DirectoryFile> temp= path_.get_files();				
+			KMPSearch obj = new KMPSearch();
+			for(int i=0;i<temp.size();i++){
+				int[] arr= obj.kmp(temp.get(i).get_file_name().toCharArray(), pattern.toCharArray());
+				if(arr.length!=0){
+					search_results.add(temp.get(i));
+				}
+			}		
+			return search_results;
+
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/* 	
 	public FileStatistics(int mainMenu, int choice){
 		mainMenu=this.mainMenu;
 		choice=this.choice;		
@@ -142,19 +161,7 @@ public class FileStatistics{
 		searchString=this.searchString;
 		valueSearch= value;
 	}
-	public ArrayList<DirectoryFile> getSearchResults(String pattern, String folderName) {
-		PathMap path_= path.get(folderName);
-		ArrayList<DirectoryFile> search_results = new ArrayList<DirectoryFile>();
-		ArrayList<DirectoryFile> temp= path_.get_files();				
-			KMPSearch obj = new KMPSearch();
-			for(int i=0;i<temp.size();i++){
-				int[] arr= obj.kmp(temp.get(i).get_file_name().toCharArray(), pattern.toCharArray());
-				if(arr.length!=0){
-					search_results.add(temp.get(i));
-				}
-			}		
-			return search_results;
+*/
 
-	}
  
 }
