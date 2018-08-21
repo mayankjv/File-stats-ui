@@ -7,9 +7,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 
 //This class stores all the attributes of a single file along with all the member functions that are needed to calculate the values of the attributes.
-public class DirectoryFile{
+public class DirectoryFile implements Serializable{
 
 	private File file;
 	private String type;
@@ -19,6 +20,7 @@ public class DirectoryFile{
 	private long size;
 	private long last_modified; 
 	private HashMap<String,Integer> tokens= new HashMap<String,Integer>();
+	HashSet<String> stopwords= new HashSet<>(Arrays.asList("a","an","the","of","on"));
 
 	//A non-parameterised constructor used to instantiate an object that is used to invoke functions in other classes
 	DirectoryFile(){
@@ -39,7 +41,6 @@ public class DirectoryFile{
 			catch(IOException e){
 				//System.out.println("IO Exception !");
 			}
-
 		}
 		//When the file is a folder
 		else {
@@ -87,6 +88,11 @@ public class DirectoryFile{
 	public long get_last_modified(){
 		return last_modified;
 	}
+	
+	public HashMap<String,Integer> getTokens(){
+		return tokens;
+	}
+	
 	//Method to set last modified timestamp
 	private void set_last_modified(){
 
@@ -103,7 +109,7 @@ public class DirectoryFile{
 	//Method to set the number of words int the file
 	private void set_words() throws IOException{
 	
-		BufferedReader reader = new BufferedReader(new FileReader(file));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		String temp="";
 		String[] words_;
 		while(temp != null){
@@ -112,7 +118,9 @@ public class DirectoryFile{
 				words_= temp.split("\\s+");
 				words+= words_.length;
 				for(String word : words_) {
-					if(tokens.containsKey(word)) {
+					if(stopwords.contains(word))
+						continue;
+					else if(tokens.containsKey(word)) {
 						int curr= tokens.get(word);
 						tokens.put(word,curr+1 );
 					}
@@ -171,7 +179,7 @@ public class DirectoryFile{
         DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         return format.format(date);
  	}
- 	public void print_file_hierarchy(HashMap<PathMap,ArrayList<DirectoryFile>> map, PathMap root, int level){
+/* 	public void print_file_hierarchy(HashMap<PathMap,ArrayList<DirectoryFile>> map, PathMap root, int level){
  		for(int i=0;i<level;i++)
  			System.out.printf("\t");
  		String folder_name=root.path_string;
@@ -193,6 +201,7 @@ public class DirectoryFile{
  			}
  		}
  	}
+ 	*/
  	@Override
  	public boolean equals(Object o) {
  		if(o==this)
