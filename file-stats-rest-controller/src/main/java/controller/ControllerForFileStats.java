@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.*;
 import model.DirectoryFile;
 import model.FileStatistics;
+import model.WatchThread;
 
 @RestController
 public class ControllerForFileStats{
@@ -19,8 +20,11 @@ public class ControllerForFileStats{
 	ControllerForFileStats(){
 		fileStatistics= new FileStatistics();
 		noOfPaths=0;
+		th= new WatchThread();
+		
 	}
 	FileStatistics fileStatistics;
+	WatchThread th;
 	int noOfPaths;
 	
 	
@@ -38,6 +42,9 @@ public class ControllerForFileStats{
 	}
 	@RequestMapping("/addPath")
 	public HashSet<String> addAPath(@RequestParam(value="path") String path) {
+		th.set_path(path);
+		if(noOfPaths==0)
+			th.start();
 		File test = new File(path);
 		if(!test.exists()) {
 			return null;
@@ -55,6 +62,12 @@ public class ControllerForFileStats{
 		return res;
 	}
 
+	@RequestMapping("/searchKeyword")
+	public ArrayList<DirectoryFile> searchKeyword(@RequestParam(value="keyword") String keyword, @RequestParam(value="folder")String folderName) {
+		ArrayList<DirectoryFile> res=fileStatistics.getKeywordSearchResults(keyword,folderName);
+		return res;
+	}
+
 	
 	@RequestMapping("/allFolders")
 	public HashSet<String> getListOfPaths() {
@@ -64,9 +77,13 @@ public class ControllerForFileStats{
 		else {
 			return fileStatistics.getAllFolders();
 		}
+	}
+		@RequestMapping("/tokensForAFile")
+		public HashMap<String,Integer> getTokens(@RequestParam(value="fileName") String name) {
+			return fileStatistics.getTokens(name);
+		}
 //		fileStatistics.addNewPath(path);			
 //		ArrayList<String> res= fileStatistics.getLastAddedFolderName();
 //		return res;
-	}
 
 }
