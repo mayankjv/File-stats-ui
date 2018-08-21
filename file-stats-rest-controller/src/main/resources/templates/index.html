@@ -54,8 +54,14 @@
 		tr:nth-child(even) {
 	    	background-color: #dddddd;
 		}
+		a:link {
+		    color: red;
+		}
+		.block {
+			width:100%;
+		}
 	</style>
-	<body class="container">
+	<body class="container" link="white">
 <!-- 
 		<ul>
 		  <li><a href="javascript:showEnterPath()">Add Path</a></li>
@@ -80,41 +86,43 @@
  -->
  
  		<br>	
-		 <div class="row">
+		 <div class="row container">
 		 
 		  <div class="col-md-12">Enter Directory:</div>
 		</div>
 		 <br>	
-		 <div class="row">
+		 <div class="row container">
 		 
 		  <div class="col-md-12"><input type="text" class="form-control" id="input_path"></div>
 		</div>
 		<br>
-		 <div class="row">
+		 <div class="row container">
 		 
-		  <div class="col-md-12"><button type="button" class="btn btn-primary" onclick='addPath()' >Add Path</button></div>
+		  <div class="col-md-3"><button type="button" class="btn btn-secondary block" onclick='addPath()' >Add Path</button></div>
+		  <div class="col-md-9"><div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%">something</div></div>
 		</div>
 
 		
 		<!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
 		<br>
-		<div class="row">
-		  <div class="col-md-12"><button type="button" class="btn btn-primary btn-block" onclick='showAllPaths()' >Show Folders</button></div>
+		<div class="row container">
+		  <div class="col-md-12"><button type="button" class="btn btn-info btn-block" onclick='showAllPaths()' >Show Folders</button></div>
 		</div>
 		
 		<!-- Columns are always 50% wide, on mobile and desktop -->
 		<br>
-		<div class="row">
-		  <div class="col-md-10"><input type="text" class="form-control" id="search_text"></div>
-		  <div class="col-md-2"><button type="button" class="btn btn-dark" onclick='searchString()' >Search</button></div>
+		<div class="row container">
+		  <div class="col-md-8"><input type="text" class="form-control" id="search_text"></div>
+		  <div class="col-md-2"><button type="button" class="btn btn-dark block" onclick='searchString()' >Search</button></div>
+		  <div class="col-md-2"><button type="button" class="btn btn-dark block" onclick='searchKeyword()' >Keyword Search</button></div>
 		</div>
 		<br>
-		<div class="row" >
-		  <div class="col-md-2"><button type="button" class="btn btn-primary  btn-block" onclick='back()' style="display:none">Back</button></div>
+		<div class="row container" >
+		  <div class="col-md-2"><button type="button" class="btn btn-primary  btn-block btn-light" onclick='back()' >Back</button></div>
 		</div>
 
 		<br>
-		<div class="row">
+		<div class="row container">
 			<div class="col-md-9">
 				<table class="table" id="table tbody">
 				</table>
@@ -125,6 +133,31 @@
 			</div>
  
  		</div>
+ 		
+		<div class="modal fade" id="tokenModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+		  <div class="modal-dialog" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <h5 class="modal-title" id="ModalTitle">Token Counts</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+		          <span aria-hidden="true">&times;</span>
+		        </button>
+		      </div>
+		      <div class="modal-body" id="modalBody">
+		        <table class="table" id="modal-table">
+		        	<thead class="thead-dark">
+		        		<tr><th>Token</th><th>Count</th></tr>
+		        	</thead>
+		        </table>
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+ 		
+ 		
 	</body>
 		<!-- jQuery library -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -143,9 +176,18 @@
 			var show= new XMLHttpRequest();
 			show.onreadystatechange= searchResponse;
 			var pattern= document.getElementById("search_text").value;
-			show.open("GET","/searchPattern?pattern="+pattern+"&folder="currFolderName,true);
+			show.open("GET","/searchPattern?pattern="+pattern+"&folder="+currFolderName,true);
+			show.send();			
+		}
+		function searchKeyword(){
+			alert("function called");
+			var show= new XMLHttpRequest();
+			show.onreadystatechange= searchResponse;
+			var keyword= document.getElementById("search_text").value;
+			show.open("GET","/searchKeyword?keyword="+keyword+"&folder="+currFolderName,true);
 			show.send();			
 		}	
+
 		function searchResponse(){
 			if(this.readyState == 4 && this.status == 200){
 				if(jQuery.isEmptyObject(this.responseText))
@@ -153,13 +195,13 @@
 				else{
 					var json = this.responseText;
 					var data_ = JSON.parse(json);
-					document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<thead class=\"thead-dark\"><tr><th>"+"<a href=\"#\" onclick='sortTableByName()'>File Name<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByType()'>Type<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableBySize()'>Size<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByWords()'>Word Count<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByLines()'>Line Count<//a>"+"</th></tr></thead>";
+					document.getElementById("table tbody").innerHTML="<thead class=\"thead-dark\"><tr><th>"+"<a href=\"#\" onclick='sortTableByName()'>File Name<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByType()'>Type<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableBySize()'>Size<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByWords()'>Word Count<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByLines()'>Line Count<//a>"+"</th></tr></thead>";
 					for(var ij in data_) {
 						if(data_[ij]._type=="Folder"){
 							document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td><a href=\"#\" onclick='showFilesInThisSubFolder(\""+data_[ij]._file_name+"\")'>"+ data_[ij]._file_name +"</a>"+"</td><td>"+data_[ij]._type+"</td></tr>";
 						}
 						else{
-							document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td>"+data_[ij]._file_name+"</td><td>"+data_[ij]._type+"</td><td>"+data_[ij]._size+"</td><td>"+data_[ij]._words+"</td><td>"+data_[ij]._lines+"</td></tr>";
+							document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td>"+data_[ij]._file_name+"</td><td>"+data_[ij]._type+"</td><td>"+data_[ij]._size+"</td><td>"+data_[ij]._words+"</td><td>"+data_[ij]._lines+"</td><td> <button type=\"button\" class=\"btn btn-outline-info btn-sm \" data-toggle=\"modal\" data-target=\"#tokenModal\" onclick=getTokensForThisFile(\""+data_[ij]._file_name+"\") >Show Tokens</button> </td></tr>";
 						}				
 					}
 					
@@ -168,12 +210,13 @@
 					
 		}		
 		
-		function showEnterPath(){
-			document.getElementById("myDiv").style.display='block';
-			document.getElementById("table tbody").style.visibility='hidden';
-			document.getElementById("back btn").style.visibility='hidden';
-			document.getElementById("folders").style.visibility='hidden';
-		}
+
+
+		
+		
+		
+		
+		
 		
 		function addPath(){
 			var show= new XMLHttpRequest();
@@ -191,6 +234,12 @@
 					alert("New Path added");
 			}
 		}
+		
+
+		
+		
+		
+		
 		
 		
 		function showAllPaths(){
@@ -214,6 +263,11 @@
 				}
 			}
 		}
+		
+		
+		
+		
+		
 		function back(){
 			if(backPath.length == 1){
 				
@@ -223,6 +277,12 @@
 				showFilesInThisFolder(backPath[backPath.length-1]);
 			}
 		}
+		
+		
+		
+		
+		
+		
 		function showFilesInThisFolder(data){
 			if(backPath.indexOf(data)==-1)
 				backPath.push(data);
@@ -238,26 +298,32 @@
 				//document.getElementById("folders").innerHTML= this.responseText;
 				var json = this.responseText;
 				var data_ = JSON.parse(json);
-				document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<thead class=\"thead-dark\"><tr><th>"+"<a href=\"#\" onclick='sortTableByName()'>File Name<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByType()'>Type<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableBySize()'>Size<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByWords()'>Word Count<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByLines()'>Line Count<//a>"+"</th></tr></thead>";
+				document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<thead class=\"thead-dark\"><tr><th>"+"<a href=\"#\" onclick='sortTableByName()'>File Name<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByType()'>Type<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableBySize()'>Size<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByWords()'>Word Count<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByLines()'>Line Count<//a>"+"</th><th>Tokens</th></tr></thead>";
 				for(var ij in data_) {
 					if(data_[ij]._type=="Folder"){
 						document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td><a href=\"#\" onclick='showFilesInThisSubFolder(\""+data_[ij]._file_name+"\")'>"+ data_[ij]._file_name +"</a>"+"</td><td>"+data_[ij]._type+"</td></tr>";
 					}
 					else{
-						document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td>"+data_[ij]._file_name+"</td><td>"+data_[ij]._type+"</td><td>"+data_[ij]._size+"</td><td>"+data_[ij]._words+"</td><td>"+data_[ij]._lines+"</td></tr>";
+						document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<tr><td>"+data_[ij]._file_name+"</td><td>"+data_[ij]._type+"</td><td>"+data_[ij]._size+"</td><td>"+data_[ij]._words+"</td><td>"+data_[ij]._lines+"</td><td> <button type=\"button\" class=\"btn btn-outline-info btn-sm  \" data-toggle=\"modal\" data-target=\"#tokenModal\" onclick=getTokensForThisFile(\""+data_[ij]._file_name+"\") >Show Tokens</button> </td></tr>";
 					}				
 				}
 			}
 			
 		}
 		
+		
+		
+		
+		
 		function emptyTable(){
 			document.getElementById("table tbody").innerHTML="";
 		}
 		
+		
+		
+		
 
 		function showFilesInThisSubFolder(data){
-			document.getElementById("back btn").style.display ="block";
 			if(backPath.indexOf(data)==-1)
 				backPath.push(data);
 			emptyTable();
@@ -267,9 +333,31 @@
 			xhttp.open("GET","/filesInThisFolder?folder_name="+data,true);
 			xhttp.send();
 		}
+
+		
+		
+		
+		function getTokensForThisFile(fileName){
+			var xhttp= new XMLHttpRequest();
+			xhttp.onreadystatechange= tokenResponse;
+			xhttp.open("GET","/tokensForAFile?fileName="+fileName,true);
+			xhttp.send();			
+		}
+		function tokenResponse(){
+			if(this.readyState == 4 && this.status == 200){
+				var json = this.responseText;
+				var data_ = JSON.parse(json);
+				document.getElementById("modal-table").innerHTML="<thead class=\"thead-dark\"><tr><th>Token</th><th>Count</th></tr></thead>";
+				for(i in Object.keys(data_)){
+					document.getElementById("modal-table").innerHTML=document.getElementById("modal-table").innerHTML+"<tr><td>"+Object.keys(data_)[i]+"</td><td>"+Object.values(data_)[i]+"</td></tr>";		
+				}
+			}			
+		}
 		
 
-		//////https://www.kryogenix.org/code/browser/sorttable/
+		
+		
+		
 		
 		function sortTableByName() {
 			  var table, rows, switching, i, x, y, shouldSwitch;
@@ -382,9 +470,7 @@
 			    }
 			  }
 			}
-
-		
-		
+				
 		
 
 	</script>
