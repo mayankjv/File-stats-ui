@@ -110,7 +110,7 @@
 		</div>
 		<br>
 		<div class="row" >
-		  <div class="col-md-2"><button type="button" class="btn btn-primary  btn-block" onclick='back()' >Back</button></div>
+		  <div class="col-md-2"><button type="button" class="btn btn-primary  btn-block" onclick='back()' style="display:none">Back</button></div>
 		</div>
 
 		<br>
@@ -257,6 +257,7 @@
 		
 
 		function showFilesInThisSubFolder(data){
+			document.getElementById("back btn").style.display ="block";
 			if(backPath.indexOf(data)==-1)
 				backPath.push(data);
 			emptyTable();
@@ -268,6 +269,7 @@
 		}
 		
 
+		//////https://www.kryogenix.org/code/browser/sorttable/
 		
 		function sortTableByName() {
 			  var table, rows, switching, i, x, y, shouldSwitch;
