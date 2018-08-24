@@ -1,0 +1,140 @@
+<! DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>File Statistics</title>
+</head>
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="style.css">
+<body class="container" link="white">
+
+
+	<br>
+	<div class="row container">
+
+		<div class="col-md-12">
+			<div class="alert alert-danger" id="alert-failure"
+				style="display: none"></div>
+		</div>
+		<div class="col-md-12">
+			<div class="alert alert-success" id="alert-success"
+				style="display: none"></div>
+		</div>
+
+	</div>
+	</div>
+	<br>
+	<div class="row container">
+
+		<div class="col-md-12">Enter Directory:</div>
+	</div>
+	<br>
+	<div class="row container">
+
+		<div class="col-md-12">
+			<input type="text" class="form-control" id="input_path">
+		</div>
+	</div>
+	<br>
+	<div class="row container">
+
+		<div class="col-md-2">
+			<button type="button" class="btn btn-secondary block"
+				onclick='addPath()'>Add Path</button>
+		</div>
+		<div class="col-md-2">
+			<button type="button" class="btn btn-info btn-block"
+				onclick='showAllPaths()'>Show Folders</button>
+		</div>
+		<div class="col-md-8">
+			<div
+				class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+				id="progress-bar" style="width: 0%; display: none">0%</div>
+		</div>
+
+	</div>
+	<!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
+	<br>
+
+	<!-- Columns are always 50% wide, on mobile and desktop -->
+	<br>
+	<div class="row container">
+		<div class="col-md-8">
+			<input type="text" class="form-control" id="search_text">
+		</div>
+		<div class="col-md-2">
+			<button type="button" class="btn btn-dark block"
+				onclick='searchString()'>Search</button>
+		</div>
+		<div class="col-md-2">
+			<button type="button" class="btn btn-dark block"
+				onclick='searchKeyword()'>Keyword Search</button>
+		</div>
+	</div>
+	<br>
+	<div class="row container">
+		<div class="col-md-2">
+			<button type="button" class="btn btn-primary  btn-block btn-light"
+				onclick='back()'>Back</button>
+		</div>
+	</div>
+
+	<br>
+	<div class="row container">
+		<div class="col-md-9">
+			<table class="table" id="table tbody">
+			</table>
+		</div>
+		<div class="col-md-3">
+			<div class="list-group" id="folders"></div>
+		</div>
+
+	</div>
+	<div class="row container" id="response"></div>
+
+	<div class="modal fade" id="tokenModal" tabindex="-1" role="dialog"
+		aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="ModalTitle">Token Counts</h5>
+					<button type="button" class="close" data-dismiss="modal"
+						aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body" id="modalBody">
+					<table class="table" id="modal-table">
+						<thead class="thead-dark">
+							<tr>
+								<th>Token</th>
+								<th>Count</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+</body>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+<script
+	src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+
+
+<script src="/webjars/sockjs-client/sockjs.min.js"></script>
+<script src="/webjars/stomp-websocket/stomp.min.js"></script>
+<script src="socket.js"></script>
+<script src="scripts.js"></script>
+</html>

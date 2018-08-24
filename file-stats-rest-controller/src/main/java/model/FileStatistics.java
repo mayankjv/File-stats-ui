@@ -1,214 +1,184 @@
 package model;
 
+import java.util.*;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.MessagingException;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+
+import controller.ControllerForFileStats;
+
+import java.awt.Desktop;
 import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 
-//This class stores all the attributes of a single file along with all the member functions that are needed to calculate the values of the attributes.
-public class DirectoryFile implements Serializable{
+/**
+ * @author mayank.patel
+ * This program takes the path to a directory(folder) as an input from the user and monitors the directory continuously for changes.
+ * Apart from monitoring, it also allows user to list all the files present in that directory as well as the subdirectories.
+ * The listing can be done in sorted manner or in random manner according to user requirements.
+ * The user can also perform a search based on attributes of the files like Name and size .
+ * The only public class is names FileStatistics which contains the main method and is responsible for allowing user to interact with the application.
+ * 
+ * 
+ */
+//The public class that contains the main method, the interaction with user will be done in this class.
 
-	private File file;
-	private String type;
-	private String name;
-	private int lines;
-	private long words;
-	private long size;
-	private long last_modified; 
-	private HashMap<String,Integer> tokens= new HashMap<String,Integer>();
-	HashSet<String> stopwords= new HashSet<>(Arrays.asList("a","an","the","of","on"));
 
-	//A non-parameterised constructor used to instantiate an object that is used to invoke functions in other classes
-	DirectoryFile(){
+@Service
+public class FileStatistics{
+
+
+
+	private HashSet<String> allPaths;
+	private HashMap<String,PathMap> path;
+	private ArrayList<DirectoryFile> result;
+	private int curr;
+	private PathMap lastAddedPath;
+	public int status=0;
+	private ControllerForFileStats controllerForFileStats;
+
+
+	public FileStatistics(){
+		path= new HashMap<>();
+		allPaths= new HashSet<String>();
+		curr=0;
+	}
+
+	public FileStatistics(ControllerForFileStats controllerForFileStats){
+		path= new HashMap<>();
+		allPaths= new HashSet<String>();
+		curr=0;
+		this.controllerForFileStats=controllerForFileStats;
+	}
+	public void addNewPath(String pathString) {
 		
+		
+		PathMap newPath= new PathMap(pathString,this,this.controllerForFileStats,false);
+		newPath.store_file_list(pathString);
+		path.put(extractNameFromPath(pathString),newPath);
+		if(allPaths.contains(extractNameFromPath(pathString)))
+			return;
+		String name= extractNameFromPath(pathString);
+		allPaths.add(name);
+		lastAddedPath=newPath;
+		curr++;
 	}
-	//A parameterised Constructor that sets all the attributes of a file by calling suitable functions.
-	DirectoryFile(File f){
-		file = f;
-		if(!file.isDirectory()) {
-			try{
-				type = set_type(file);
-				name = set_name(file);
-				set_lines();
-				set_words();
-				set_size();
-				set_last_modified();
-			}
-			catch(IOException e){
-				//System.out.println("IO Exception !");
+	
+
+	public void addNewPathInsideFolder(String pathString) {
+		
+		
+		PathMap newPath= new PathMap(pathString,this,this.controllerForFileStats,true);
+		newPath.store_file_list_subfolder(pathString);
+		path.put(extractNameFromPath(pathString),newPath);
+		if(allPaths.contains(extractNameFromPath(pathString)))
+			return;
+		String name= extractNameFromPath(pathString);
+		allPaths.add(name);
+		lastAddedPath=newPath;
+		curr++;
+	}
+	
+	
+	//Main method 
+	public void execute(String folderName) throws IOException, InterruptedException{
+
+		PathMap path_ = path.get(folderName);
+		HashMap<String,ArrayList<DirectoryFile>> map =path_.get_map();
+		result= map.get(path_.path_string);
+		//			result = path_.get_files();
+		for(DirectoryFile directoryFile: result) {
+			if(directoryFile.get_size()==-1) {
+				addNewPathInsideFolder(path_.path_string+"\\\\"+directoryFile.get_file_name());
 			}
 		}
-		//When the file is a folder
-		else {
-			type="Folder";
-			name=file.getName();
-			lines=-1;
-			words=-1;
-			size=-1;
-			last_modified=-1;
-		}
-		//Since BufferedReader is used, it might throw IOException
 
 	}
-	
-	//Getter Method for getting the File object associated with an
-	public File get_file() {
-		return file;
-	}
-	
-	//Getter mehtod for Name of the file
-	public String get_file_name(){
-		return name;
-	}
-	//Getter method for file type
-	public String get_type(){
-		return type;
-	}
-	//Getter method for Number of lines in the file
-	public int get_lines(){
-		return lines;
-	}
-	//Getter method for number of words in the file
-	public long get_words(){
-		return words;
-	}
-	//Getter method for tokens in the file
-	public HashMap<String,Integer> get_tokens(){
-		return tokens;
-	}
-	////Getter method for the size of the file
-	public long get_size(){
-		return size;
-	}
-	//Getter method for the last modified timestamp of the file
-	public long get_last_modified(){
-		return last_modified;
-	}
-	
-	public HashMap<String,Integer> getTokens(){
-		return tokens;
-	}
-	
-	//Method to set last modified timestamp
-	private void set_last_modified(){
-
-		last_modified=file.lastModified();
-	
-	}
-	//Method to set the size of the file
-	private void set_size(){
-	
-		size= file.length();
-	
-	}
-	
-	//Method to set the number of words int the file
-	private void set_words() throws IOException{
-	
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-		String temp="";
-		String[] words_;
-		while(temp != null){
-			try{
-				temp= reader.readLine();
-				words_= temp.split("\\s+");
-				words+= words_.length;
-				for(String word : words_) {
-					if(stopwords.contains(word))
-						continue;
-					else if(tokens.containsKey(word)) {
-						int curr= tokens.get(word);
-						tokens.put(word,curr+1 );
-					}
-					else
-						tokens.put(word, 1);
+	public void openFile(String FileName) {
+		for(DirectoryFile directoryFile: result) {
+			if(directoryFile.get_file_name().equals(FileName)) {
+				try {
+					Desktop.getDesktop().open(directoryFile.get_file());
+					System.out.println("Words After: "+directoryFile.get_words());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
-			catch(NullPointerException e){
-//				System.out.println("File Empty!");
+		}
+	}
+
+	public ArrayList<DirectoryFile> getResult(){
+		return result;
+	}
+	public HashSet<String> getAllFolders() {
+		return allPaths;
+	}
+	public String extractNameFromPath(String path) {
+
+		if(path.contains("\\")){
+			String res=path.substring(path.lastIndexOf("\\")+1);
+			return res;
+		}
+		else {
+			return path;
+		}
+	}
+
+	public ArrayList<DirectoryFile> getSearchResults(String pattern, String folderName) {
+		PathMap path_= path.get(folderName);
+		ArrayList<DirectoryFile> search_results = new ArrayList<DirectoryFile>();
+		ArrayList<DirectoryFile> temp= path_.get_files();				
+		KMPSearch obj = new KMPSearch();
+		for(int i=0;i<temp.size();i++){
+			int[] arr= obj.kmp(temp.get(i).get_file_name().toCharArray(), pattern.toCharArray());
+			if(arr.length!=0){
+				search_results.add(temp.get(i));
+			}
+		}		
+		return search_results;
+
+	}
+
+	public ArrayList<DirectoryFile> getKeywordSearchResults(String keyword, String folderName) {
+		PathMap path_= path.get(folderName);
+		ArrayList<DirectoryFile> search_results = new ArrayList<DirectoryFile>();
+		ArrayList<DirectoryFile> temp= path_.get_files();	
+		KeywordCountComparator keywordCountComparator = new KeywordCountComparator();
+		keywordCountComparator.set_keyword(keyword);
+		for(int i=0;i<temp.size();i++){
+			if(temp.get(i).getTokens().containsKey(keyword)){
+				search_results.add(temp.get(i));
+			}
+		}	
+		Collections.sort(search_results, keywordCountComparator);
+		return search_results;
+
+	}	
+
+	public HashMap<String, Integer> getTokens(String name) {
+		for(String path_string: path.keySet()) {
+			PathMap current= path.get(path_string);
+			ArrayList<DirectoryFile> al= current.get_files();
+			for(DirectoryFile file: al) {
+				if(file.get_file_name().equals(name)) {
+					return file.getTokens();
+				}
 			}
 		}
-		reader.close();
-	
+		return null;
 	}
-	//Method to set the number of lines in the file
-	private void set_lines() throws IOException{
-		BufferedReader reader = new BufferedReader(new FileReader(file));
-		while (reader.readLine() != null) lines++;
-		reader.close();
-	}
-	////Method to set the Name of the file
-	private String set_name(File file){
 
-        String fileName = file.getName();
-        if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0){
-        	return fileName.substring(0,fileName.lastIndexOf("."));
-
-        }
-        else return "";
-
-	}
-	////Method to set the file type
-	private String set_type(File file){
-	
-        String fileName = file.getName();
-        if(fileName.lastIndexOf(".") != -1 && fileName.lastIndexOf(".") != 0){
-        	return fileName.substring(fileName.lastIndexOf(".")+1);
-        }
-        else return "";
-	
-	}
-	//Mehtod to print all the attributes of a file in a single row.
-	public void print_file(ArrayList<DirectoryFile> all_files){
-		System.out.printf("%-30s %-20s %25s %30s\t %-40s %25s\n","File Name","Extension","Words","Lines","Last Modified","Size");
-		System.out.printf("======================================================================================================================================================================================\n");
-		for(int i=0;i<all_files.size();i++){
-			if(all_files.get(i).get_file().isDirectory())
-				continue;
-			String date= date_format_change(all_files.get(i).get_last_modified());
-			System.out.printf("%-30s %-20s %25d %30d\t %-40s %25d b\n",all_files.get(i).get_file_name(),all_files.get(i).get_type(),all_files.get(i).get_words(),all_files.get(i).get_lines(),date,all_files.get(i).get_size());
-			//System.out.println("File Name: "+name+"\tExtension: "+type+"\tWords: "+words+"\tLines: "+lines+"\tLast Modified: "+date+"\tSize: "+size);
+	public void call_for_change(String name, String path_string, int kind){
+		try {
+			path.get(path_string).modify_file_list(name,path_string,kind);
+		}
+		catch(Exception e) {
+			System.out.println("Exception in call_for_change");
 		}
 	}
- 	public String date_format_change(long epoch) {
-        Date date = new Date(epoch);
-        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        return format.format(date);
- 	}
-/* 	public void print_file_hierarchy(HashMap<PathMap,ArrayList<DirectoryFile>> map, PathMap root, int level){
- 		for(int i=0;i<level;i++)
- 			System.out.printf("\t");
- 		String folder_name=root.path_string;
- 		if(folder_name.contains("\\")) {
- 			System.out.printf(folder_name.substring(folder_name.lastIndexOf('\\')+1)+"\n");
- 		}else {
- 			System.out.printf(folder_name+"\n");
- 		}
- 		ArrayList<DirectoryFile> al = map.get(root);
- 		for(int i=0;i<al.size();i++) {
- 			if(al.get(i).get_file().isDirectory()) {
 
- 				print_file_hierarchy(map, new PathMap(root.path_string+"\\"+al.get(i).get_file_name()), level+1);
- 			}
- 			else {
- 		 		for(int j=0;j<level+1;j++)
- 		 			System.out.printf("\t");
- 				System.out.println(al.get(i).get_file_name()+"."+al.get(i).get_type());
- 			}
- 		}
- 	}
- 	*/
- 	@Override
- 	public boolean equals(Object o) {
- 		if(o==this)
- 			return true;
- 		DirectoryFile f= (DirectoryFile)o;
- 		if(f.get_file_name().equals(this.get_file_name()))
- 			return true;
- 		return false;
- 	}
 }
