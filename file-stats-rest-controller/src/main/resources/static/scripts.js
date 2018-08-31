@@ -49,6 +49,9 @@ function searchResponse(){
 
 
 function addPath(){
+	document.getElementById("table tbody").style.display='none';
+	document.getElementById("folders").style.display='none';
+	document.getElementById("back-btn").style.display='none';
 	var show= new XMLHttpRequest();
 	show.onreadystatechange= resp;
 	var path_= document.getElementById("input_path").value;
@@ -82,6 +85,9 @@ function resp(){
 
 
 function showAllPaths(){
+	document.getElementById("table tbody").style.display='none';
+	document.getElementById("back-btn").style.display='none';
+	document.getElementById("folders").style.display='block';
 	document.getElementById("folders").innerHTML="";
 	var folderRequest= new XMLHttpRequest();
 	folderRequest.onreadystatechange= folderResponse;
@@ -112,7 +118,7 @@ function folderResponse(){
 
 
 function back(){
-	if(backPath.length <= 1){
+	if(backPath.length <= 2){
 		var alert= document.getElementById("alert-failure");
 		alert.style.display="block";
 		alert.innerHTML="Cannot go back further, try selecting a folder!";
@@ -133,7 +139,7 @@ function back(){
 
 
 function showFilesInThisFolder(data){
-
+	document.getElementById("table tbody").style.display='block';
 	if(backPath.indexOf(data)==-1)
 		backPath.push(data);
 	emptyTable();
@@ -149,6 +155,7 @@ function xresp(){
 		//document.getElementById("folders").innerHTML= this.responseText;
 		var json = this.responseText;
 		var data_ = JSON.parse(json);
+		document.getElementById("back-btn").style.display='block';
 		document.getElementById("table tbody").innerHTML=document.getElementById("table tbody").innerHTML+"<thead class=\"thead-dark\"><tr><th>"+"<a href=\"#\" onclick='sortTableByName()'>File Name<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByType()'>Type<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableBySize()'>Size<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByWords()'>Word Count<//a>"+"</th><th>"+"<a href=\"#\" onclick='sortTableByLines()'>Line Count<//a>"+"</th><th>Tokens</th></tr></thead>";
 		for(var ij in data_) {
 			if(data_[ij]._type=="Folder"){

@@ -33,7 +33,7 @@ public class DirectoryFile implements Serializable{
 		th.setFile(this);
 		th.start();
 	}
-/*
+	/*
 		if(!file.isDirectory()) {
 			try{
 				type = set_type(file);
@@ -56,7 +56,7 @@ public class DirectoryFile implements Serializable{
 			last_modified=-1;
 		}
 		//Since BufferedReader is used, it might throw IOException
-*/
+	 */
 
 	//Getter Method for getting the File object associated with an
 	public File get_file() {
@@ -114,18 +114,20 @@ public class DirectoryFile implements Serializable{
 	public void setLines(int lines){
 		this.lines= lines;
 	}
-	
+
 
 	////Method to set the Name of the file
 	public void setName(String name){
 		this.name= name;
 	}
-	
+
 
 	////Method to set the file type
 	public void setType(String type){
 		this.type= type;
 	}
+
+
 	@Override
 	public boolean equals(Object o) {
 		if(o==this)

@@ -8,6 +8,29 @@
 <link rel="stylesheet" href="style.css">
 <body class="container" link="white">
 
+   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">Dorectory Monitoring System</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample07" aria-controls="navbarsExample07" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+	<div class="row container">
+		<div class="col-md-7">
+			<input type="text" class="form-control" id="search_text">
+		</div>
+		<div class="col-md-2">
+			<button type="button" class="btn btn-dark block"
+				onclick='searchString()'>Search</button>
+		</div>
+		<div class="col-md-3">
+			<button type="button" class="btn btn-dark block"
+				onclick='searchKeyword()'>Keyword Search</button>
+		</div>
+	</div>
+      </div>
+    </nav>
+
 
 	<br>
 	<div class="row container">
@@ -22,42 +45,37 @@
 		</div>
 
 	</div>
+	<div class="row container">
+
+		
 	</div>
 	<br>
 	<div class="row container">
-
-		<div class="col-md-12">Enter Directory:</div>
-	</div>
-	<br>
-	<div class="row container">
-
-		<div class="col-md-12">
+		<div class="col-md-2">Enter Directory:</div>
+		<div class="col-md-10">
 			<input type="text" class="form-control" id="input_path">
 		</div>
 	</div>
 	<br>
-	<div class="row container">
+	<div class="row container ">
 
-		<div class="col-md-2">
-			<button type="button" class="btn btn-secondary block"
-				onclick='addPath()'>Add Path</button>
-		</div>
-		<div class="col-md-2">
-			<button type="button" class="btn btn-info btn-block"
-				onclick='showAllPaths()'>Show Folders</button>
-		</div>
 		<div class="col-md-8">
 			<div
 				class="progress-bar progress-bar-striped progress-bar-animated bg-success"
 				id="progress-bar" style="width: 0%; display: none">0%</div>
 		</div>
 
-	</div>
-	<!-- Columns start at 50% wide on mobile and bump up to 33.3% wide on desktop -->
-	<br>
+		<div class="col-md-2 float-right">
+			<button type="button" class="btn btn-secondary block"
+				onclick='addPath()'>Add Path</button>
+		</div>
+		<div class="col-md-2 float-right">
+			<button type="button" class="btn btn-info btn-block"
+				onclick='showAllPaths()'>Show Folders</button>
+		</div>
 
-	<!-- Columns are always 50% wide, on mobile and desktop -->
-	<br>
+	</div>
+<!-- 
 	<div class="row container">
 		<div class="col-md-8">
 			<input type="text" class="form-control" id="search_text">
@@ -71,14 +89,14 @@
 				onclick='searchKeyword()'>Keyword Search</button>
 		</div>
 	</div>
-	<br>
+ 
+--> 
 	<div class="row container">
 		<div class="col-md-2">
-			<button type="button" class="btn btn-primary  btn-block btn-light"
-				onclick='back()'>Back</button>
+			<button type="button" class="btn btn-primary  btn-block btn-light" style="display:none"
+				id="back-btn" onclick='back()'>Back</button>
 		</div>
 	</div>
-
 	<br>
 	<div class="row container">
 		<div class="col-md-9">

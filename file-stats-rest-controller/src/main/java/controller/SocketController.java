@@ -12,10 +12,10 @@ public class SocketController {
 
 
 	@MessageMapping("/message")
-	@SendTo("/socketresponse/greetings")
-	public String greeting(String message) throws Exception {
-
-		return message;
+	@SendTo("/socketresponse/status")
+	public String progress(String progress) throws Exception {
+		return progress;
 	}
 
+	
 }

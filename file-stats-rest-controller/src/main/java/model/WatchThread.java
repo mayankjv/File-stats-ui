@@ -21,136 +21,140 @@ import java.util.HashMap;
 public class WatchThread extends Thread{
 
 
-	//Declaring an object of WatchService
-	WatchService watchService;
-	HashMap<Path,WatchKey> map;
-	String path = "";
-	PathMap p;
-	
+
+	private WatchService watchService;
+	private HashMap<Path,WatchKey> map;
+	private String path = "";
+	private PathMap p;
+	private FileStatistics fileStatistics;
+
 	//method for getting the parent directory path for registering the directory and the sub directories
-	public void set_path(String path_string){
+	public void setPath(String path_string,FileStatistics fileStatistics){
 		path= path_string;
+		this.fileStatistics=fileStatistics; 
+
 	}
 
-	//Run method of the thread that will be executed in parallel with the main thread
+	/**
+	 * Run method of the thread that will be executed in parallel with the main thread
+	 */
 	public void run(){
-		
-		//WatchService.take() method might throw InterruptedExecution exception and IOException is likely to be thrown in this try block.
+
 		try{
-				watchService = FileSystems.getDefault().newWatchService(); //instantiating watchService
-        		File directory = new File(path);
-    			Path _directory = Paths.get(path);
+			watchService = FileSystems.getDefault().newWatchService(); //instantiating watchService
+			File directory = new File(path);
+			Path _directory = Paths.get(path);
 
-    			WatchKey key;
-				registerDirectory(_directory);
+			WatchKey key;
+			map= new HashMap<Path,WatchKey>();
+			registerDirectory(_directory);
 
-    			//fList contains athe list of al the files and folders at a given path.
-        		File[] fList = directory.listFiles();
-        		//A loop that registers all the subdirectories of the folder with the watchservice so that they can be monitored for changes
-        		for (int i=0;i<fList.length;i++){
-        			File file = fList[i];
-        			//When the current entry in the list is a directory, it needs to be registered with the watchService 
-            		if (file.isDirectory()){
-						try {
-							String new_path= path+"\\"+file.getName();
-    						Path _directotyToWatch = Paths.get(new_path);
-    						//creating a new key for the newly discovered folder that is not already registered with the watchService
-    						key = _directotyToWatch.register(watchService,
-                        		  				 StandardWatchEventKinds.ENTRY_CREATE,
-                        		   				StandardWatchEventKinds.ENTRY_DELETE,
-                        		   				StandardWatchEventKinds.ENTRY_MODIFY);
-    						//Inserting the new key in the map
-    						map.put(_directotyToWatch,key);
-  						} 
-  						catch (IOException e) {
-    						System.err.println(e);
-  						}
-            		}
-        		}
-        		//Infinite loop to keep the Watch Thread always powered up and running.
-        		Boolean valid = true;
-        		do {
-        			//This statement will wait until an event is encoutered.
-					WatchKey watchKey = watchService.take();
-					for (WatchEvent event : watchKey.pollEvents()) {
-						
-						WatchEvent.Kind kind = event.kind();
-						//When the event is creation of a new Entry
-						if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())) {
-							String fileName = event.context().toString();
-							//Getting the path in order to add the new file to the ArrayList that is maintained in PathMap class
-							Path dir= (Path) watchKey.watchable();
-							String path_to_be_passed= dir.resolve((Path)event.context()).toString();
-							File temp= new File(path_to_be_passed);
-							//If the newly added entry is a folder, registering it with the watchService
-							if(temp.isDirectory()){
-								System.out.println("Folder Created: " + fileName);
-								Path new_folder = Paths.get(path_to_be_passed);
-								key = new_folder.register(watchService,
-                        		  	StandardWatchEventKinds.ENTRY_CREATE,
-                        		   	StandardWatchEventKinds.ENTRY_DELETE,
-                        		   	StandardWatchEventKinds.ENTRY_MODIFY);
-							}
-							//If the newly added entry is a file, adding it to the ArrayList
-							else{
-								System.out.println("File Created:" + fileName);
-								FileStatistics fileStatistics= new FileStatistics();
-								fileStatistics.call_for_change(fileName,path_to_be_passed,0);
-							}
+			//fList contains the list of all the files and folders at a given path.
+			File[] fList = directory.listFiles();
+			//A loop that registers all the subdirectories of the folder with the watchservice so that they can be monitored for changes
+			for (int i=0;i<fList.length;i++){
+				File file = fList[i];
+				//When the current entry in the list is a directory, it needs to be registered with the watchService 
+				if (file.isDirectory()){
+					try {
+						String new_path= path+"\\"+file.getName();
+						Path _directoryToWatch = Paths.get(new_path);
+						registerDirectory(_directoryToWatch);
+					} 
+					catch (IOException e) {
+						System.err.println(e);
+					}
+				}
+			}
+		}
+		catch(Exception e) {
+			System.err.println(e);
+		}
+		Boolean valid = true;
+		//Infinite loop to keep the Watch Thread always powered up and running.
+		do {
+			try {
+				//This statement will wait until an event is encoutered.
+				WatchKey watchKey = watchService.take();
+				for (WatchEvent event : watchKey.pollEvents()) {
+
+					WatchEvent.Kind kind = event.kind();
+					//When the event is creation of a new Entry
+					if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())) {
+						String fileName = event.context().toString();
+						//Getting the path in order to add the new file to the ArrayList that is maintained in PathMap class
+						Path dir= (Path) watchKey.watchable();
+						String pathToNewDirectory= dir.resolve((Path)event.context()).toString();
+						File temp= new File(pathToNewDirectory);
+						//If the newly added entry is a folder, registering it with the watchService
+						if(temp.isDirectory()){
+							System.out.println("Folder Created: " + fileName);
+							Path innerFolder = Paths.get(pathToNewDirectory);
+							registerDirectory(innerFolder);
+							fileStatistics.updateHashMap(fileName,pathToNewDirectory,0);
 						}
-						//When the new entry is a Delete event
-						else if (StandardWatchEventKinds.ENTRY_DELETE.equals(event.kind())) {
-							String fileName = event.context().toString();
-							//Getting the path.
-							Path dir= (Path) watchKey.watchable();
-							String path_to_be_passed= dir.resolve((Path)event.context()).toString();
-							File temp= new File(path_to_be_passed);
-							//If the entry that was deleted in a folder, simply display a a message
-							if(temp.isDirectory()){
-								System.out.println("Folder deleted:" + fileName);
-							}
-							//if the deleted entry is a file, display a message and delete the entry from the ArrayList
-							else{
-								System.out.println("File Deleted:" + fileName);
-								FileStatistics fileStatistics= new FileStatistics();
-								fileStatistics.call_for_change(fileName,path_to_be_passed,0);
-							}
-							
-						}
-						//When the event is a Modification
+						//If the newly added entry is a file, adding it to the ArrayList
 						else{
-//							System.out.println("Modify!");
-							String fileName = event.context().toString();
-							//clear_screen();
-							Path dir= (Path) watchKey.watchable();
-							String path_to_be_passed= dir.resolve((Path)event.context()).toString();
-							FileStatistics fileStatistics= new FileStatistics();
-							fileStatistics.call_for_change(fileName,path_to_be_passed,0);
+							System.out.println("File Created:" + fileName);
+							fileStatistics.updateHashMap(fileName,pathToNewDirectory,0);
+						}
+					}
+					//When the new entry is a Delete event
+					else if (StandardWatchEventKinds.ENTRY_DELETE.equals(event.kind())) {
+						String fileName = event.context().toString();
+						//Getting the path.
+						Path dir= (Path) watchKey.watchable();
+						String path_to_be_passed= dir.resolve((Path)event.context()).toString();
+						File temp= new File(path_to_be_passed);
+						//If the entry that was deleted in a folder, simply display a a message
+						if(fileStatistics.pathStringMap.containsKey(path_to_be_passed)){
+							System.out.println("Folder deleted:" + fileName);
+							fileStatistics.updateHashMap(fileName, path_to_be_passed, 11);
+						}
+						//if the deleted entry is a file, display a message and delete the entry from the ArrayList
+						else{
+							System.out.println("File Deleted:" + fileName);
+							fileStatistics.updateHashMap(fileName,path_to_be_passed,12);
 						}
 
 					}
-					valid= watchKey.reset();
-					//when a folder is deleted, the corresponding watchkey is deleted
-					if(!valid) map.remove(watchKey);
-            	} while(!map.isEmpty());
-        	}
-		catch(Exception e){
-			System.out.println("Exception");
-		}
+					//When the event is a Modification
+					else{
+						//							System.out.println("Modify!");
+						//String fileName = event.context().toString();
+						//Path dir= (Path) watchKey.watchable();
+						//String path_to_be_passed= dir.resolve((Path)event.context()).toString();
+						//fileStatistics.call_for_change(fileName,path_to_be_passed,2);
+					}
+
+				}
+				valid= watchKey.reset();
+				//when a folder is deleted, the corresponding watchkey is deleted
+				if(!valid) map.remove(watchKey);
+			}
+			catch(Exception e){
+				//System.err.println(e);
+				continue;
+			}
+
+		} while(!map.isEmpty());
 	}
 
+	/**
+	 * funtion that registers a directory with the watcher service
+	 * @param _directory
+	 * @throws IOException
+	 */
 	private void registerDirectory(Path _directory) throws IOException {
-		//Registering the parent directory with watchService so as to monitor it.
+		//Registering the directory with watchService so as to monitor it.
 		WatchKey key = _directory.register(watchService,
-		        		  	StandardWatchEventKinds.ENTRY_CREATE,
-		        		   	StandardWatchEventKinds.ENTRY_DELETE,
-		        		   	StandardWatchEventKinds.ENTRY_MODIFY);
-		//instantiating the HashaMap and putting the key created above in the map
-		map= new HashMap<Path,WatchKey>();
+				StandardWatchEventKinds.ENTRY_CREATE,
+				StandardWatchEventKinds.ENTRY_DELETE,
+				StandardWatchEventKinds.ENTRY_MODIFY);
+		//Putting the key created above in the map
 		map.put(_directory,key);
 	}
 
 }
-
 
 

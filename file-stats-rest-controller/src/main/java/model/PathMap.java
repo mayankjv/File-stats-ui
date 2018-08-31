@@ -14,37 +14,47 @@ import controller.ControllerForFileStats;
 
 
 //This class stores the path string and all the files in a given path. A separate class is created for this because the user might need to switch between paths.
-
 public class PathMap{
-	
+
 	public String path_string;
 	private FileStatistics fileStatistics;
 	private ArrayList<DirectoryFile> files= new ArrayList<DirectoryFile>();
-	private HashMap<String,ArrayList<DirectoryFile>> folder_to_files = new HashMap<String,ArrayList<DirectoryFile>>();
+	private HashMap<String,ArrayList<DirectoryFile>> filesInsideFolders = new HashMap<String,ArrayList<DirectoryFile>>();
 	private String indexFilePath="C:\\Users\\mayank.patel\\Desktop\\Java Projects\\Assignment_2\\file-stats-rest-controller\\Index";
 	private int status=0;
 	private int total=0;
 	private int current=0;
 	private ControllerForFileStats controllerForFileStats= new ControllerForFileStats();
-	
-	
+
+	/**
+	 * Parameterized constructor to PathMap class
+	 * @param path_to_folder
+	 */
 	PathMap(String path_to_folder){
 		path_string= path_to_folder;
-		calculateTotal(path_string);
-		//		dumpInFile();
 	}
-	
+
+	/**
+	 * over loaded parameterized constructor to PathMap
+	 * @param path_to_folder
+	 * @param fileStatistics
+	 * @param controllerForFileStats
+	 * @param isSubfolder
+	 */
 	PathMap(String path_to_folder, FileStatistics fileStatistics, ControllerForFileStats controllerForFileStats, boolean isSubfolder){
 		path_string= path_to_folder;
 		if(!isSubfolder)
-			calculateTotal(path_string);
+			calculateTotalNumberOfFiles(path_string);
 		this.fileStatistics = fileStatistics;
 		this.controllerForFileStats=controllerForFileStats;
 		//		dumpInFile();
 	}
 
-	
-	private void calculateTotal(String path) {
+	/**
+	 * This function calculates total number of files present inside a folder and in the sub-folders.
+	 * @param path
+	 */
+	private void calculateTotalNumberOfFiles(String path) {
 		File directory = new File(path);
 		File[] fList = directory.listFiles();
 		for (int i=0;i<fList.length;i++){
@@ -53,16 +63,21 @@ public class PathMap{
 				this.total++;
 			}
 			else{           	
-				String new_key=path+"\\\\"+file.getName();
-				calculateTotal(new_key);
+				String new_key=path+"\\"+file.getName();
+				calculateTotalNumberOfFiles(new_key);
 			}
 		}
 	}
-	//This method traverses through the folders and the subfolders and stores all the files that are present in an ArrayList
-	public void store_file_list(String path){
+
+
+	/**
+	 * This method traverses through the folders and the subfolders and stores all the files that are present in a HashMap
+	 * @param path
+	 */
+	public void addFoldersToMap(String path){
 		String key= path;
-		if(!folder_to_files.containsKey(key)) {
-			folder_to_files.put(key, new ArrayList<DirectoryFile>());
+		if(!filesInsideFolders.containsKey(key)) {
+			filesInsideFolders.put(key, new ArrayList<DirectoryFile>());
 		}
 		File directory = new File(path);
 		File[] fList = directory.listFiles();
@@ -71,74 +86,90 @@ public class PathMap{
 			if (file.isFile()){
 				DirectoryFile to_be_added = new DirectoryFile(file);
 				files.add(to_be_added);
-				ArrayList<DirectoryFile> ret= folder_to_files.get(key);
+				ArrayList<DirectoryFile> ret= filesInsideFolders.get(key);
 				ret.add(to_be_added);
-				folder_to_files.put(key,ret);
+				filesInsideFolders.put(key,ret);
 				current++;
 				status= (int)(current*100)/total;
-			//	System.out.println("current="+current+"\t total="+total);
+				//	System.out.println("current="+current+"\t total="+total);
 				sendStatus(status);
 			}
 			else{           	
 				DirectoryFile to_be_added = new DirectoryFile(file);
 				files.add(to_be_added);
-				ArrayList<DirectoryFile> ret= folder_to_files.get(key);
+				ArrayList<DirectoryFile> ret= filesInsideFolders.get(key);
 				ret.add(to_be_added);
-				folder_to_files.put(key,ret);
+				filesInsideFolders.put(key,ret);
 
-				String new_key=path+"\\\\"+file.getName();
-				if(!folder_to_files.containsKey(new_key)) {
-					folder_to_files.put(new_key, new ArrayList<DirectoryFile>());
-					
+				String new_key=path+"\\"+file.getName();
+				if(!filesInsideFolders.containsKey(new_key)) {
+					filesInsideFolders.put(new_key, new ArrayList<DirectoryFile>());
+
 				}
-				store_file_list(new_key);
+				addFoldersToMap(new_key);
 			}
 		}
 	}
 
-	public void store_file_list_subfolder(String path){
-		String key= path;
-		if(!folder_to_files.containsKey(key)) {
-			folder_to_files.put(key, new ArrayList<DirectoryFile>());
+
+	/**
+	 * This function carries out the same functionality as the above, for sub folders.
+	 * @param path
+	 */
+	public void addSubfoldersToMap(String path){
+		String keyToMap = path;
+		if(!filesInsideFolders.containsKey(keyToMap)) {
+			filesInsideFolders.put(keyToMap, new ArrayList<DirectoryFile>());
 		}
-		File directory = new File(path);
-		File[] fList = directory.listFiles();
+		File currentDirectory = new File(path);
+		File[] fList = currentDirectory.listFiles();
 		for (int i=0;i<fList.length;i++){
 			File file = fList[i];
 			if (file.isFile()){
 				DirectoryFile to_be_added = new DirectoryFile(file);
 				files.add(to_be_added);
-				ArrayList<DirectoryFile> ret= folder_to_files.get(key);
+				ArrayList<DirectoryFile> ret= filesInsideFolders.get(keyToMap);
 				ret.add(to_be_added);
-				folder_to_files.put(key,ret);
+				filesInsideFolders.put(keyToMap,ret);
 			}
-			else{           	
+			else{     
+
 				DirectoryFile to_be_added = new DirectoryFile(file);
 				files.add(to_be_added);
-				ArrayList<DirectoryFile> ret= folder_to_files.get(key);
+				ArrayList<DirectoryFile> ret= filesInsideFolders.get(keyToMap);
 				ret.add(to_be_added);
-				folder_to_files.put(key,ret);
+				filesInsideFolders.put(keyToMap,ret);
+				String new_key=path+"\\"+file.getName();				
 
-				String new_key=path+"\\\\"+file.getName();
-				if(!folder_to_files.containsKey(new_key)) {
-					folder_to_files.put(new_key, new ArrayList<DirectoryFile>());
-					
+				if(!filesInsideFolders.containsKey(new_key)) {
+
+					filesInsideFolders.put(new_key, new ArrayList<DirectoryFile>());
+
 				}
-				store_file_list_subfolder(new_key);
+				addSubfoldersToMap(new_key);
+
 			}
 		}
 	}
 
-	
-	
+
+	/**
+	 * function that sends the status of indexing to frontend via Web Socket
+	 * @param status
+	 */
 	private void sendStatus(int status) {
 		this.controllerForFileStats.sendProgress(status);
+		System.out.println(status);
 	}
+
+	/**
+	 * function used to dump the data of primary data structure (HashMap) in json file
+	 */
 	public void dumpInFile()
 	{
 		try {
 			ObjectOutputStream objStream1 = new ObjectOutputStream(new FileOutputStream(new File(indexFilePath+"\\indexed.json")));
-			objStream1.writeObject(folder_to_files);
+			objStream1.writeObject(filesInsideFolders);
 			objStream1.close();
 		}
 		catch(Exception e)
@@ -147,24 +178,23 @@ public class PathMap{
 		}
 	}
 
-	public int getStatus() {
-		while(status!=100)
-			return status;
-		return 0;
-	}
 
 	//public method that will help the user to get the list of the files present in a given path_string.
 	public ArrayList<DirectoryFile> get_files(){
-
 		return this.files;
 	}
 
+	/**
+	 * function that returns the value of HashMap to the controller
+	 * @return
+	 */
 	public HashMap<String,ArrayList<DirectoryFile>> get_map(){
-
-		return folder_to_files;
+		return filesInsideFolders;
 	}
 
-	
+	/**
+	 * Overridden Equals method, that compares two PathMaps based on their Path strings.
+	 */
 	@Override
 	public boolean equals(Object p) {
 		if(p==this)
@@ -173,7 +203,7 @@ public class PathMap{
 		return p1.path_string.equals(this.path_string);
 	}
 
-	
+
 	@Override
 	public int hashCode()
 	{ 
@@ -181,54 +211,110 @@ public class PathMap{
 	}
 
 
-
-
-
-
-	public void modify_file_list(String name,String path, int kind){
+	/**
+	 * This method updates the value of the Map when a watcher event is encountered
+	 * @param name
+	 * @param path
+	 * @param typeOfEvent
+	 */
+	public void updateMap(String name,String path, int typeOfEvent){
 		try {
-			if(kind == 0){
+			if(typeOfEvent == 0){
 				File file= new File(path);
 				if(file.isDirectory()) {
-					if(kind == 2)
-						return;
-					folder_to_files.put(path, new ArrayList<DirectoryFile>());
+					filesInsideFolders.put(path, new ArrayList<DirectoryFile>());
+					ArrayList<DirectoryFile> ret = filesInsideFolders.get(path.substring(0,path.indexOf(name)-1));
+					System.out.println("Key: "+path.substring(0,path.indexOf(name)-1));
+					for(DirectoryFile f: ret)
+						System.out.println(f.get_file_name());
+
+					ret.add(new DirectoryFile(file));
+
+					for(DirectoryFile f: ret)
+						System.out.println(f.get_file_name());
+
+					filesInsideFolders.put(path.substring(0,path.indexOf(name)-1),ret);
 					return;
 				}
 				DirectoryFile to_be_added= new DirectoryFile(file);
-				String pm = path.substring(0, path.indexOf(name));
+				String pm = path.substring(0, path.indexOf(name)-1);
 				files.add(to_be_added);
-				ArrayList<DirectoryFile> ret= new ArrayList<DirectoryFile>();
-				folder_to_files.put(pm, ret);
+				ArrayList<DirectoryFile> ret;
+				if(filesInsideFolders.containsKey(pm)) {
+					ret= filesInsideFolders.get(pm);
+					ret.add(to_be_added);
+				}
+				else
+					ret= new ArrayList<DirectoryFile>();
+				filesInsideFolders.put(pm, ret);
 			}
-			else if(kind == 1){
-				File file= new File("");
-				file= new File(path);
-				if(folder_to_files.containsKey(new PathMap(path))) {
-					folder_to_files.remove(new PathMap(path));
-					return;
+			else if(typeOfEvent == 12){
+				File file= new File(path);
+				String pm= path.substring(0,path.indexOf(name)-1);
+				//				for(DirectoryFile fil: files){
+				//					if((fil.get_file_name()+"."+fil.get_type()).equals(name)){
+				//						files.remove(fil);
+				//						break;				
+				//					}
+				//				}
+				ArrayList<DirectoryFile> ret = filesInsideFolders.get(pm);
+				for(DirectoryFile current : ret) {
+					if(current.get_file_name().equals(name.substring(0, name.indexOf('.'))))
+						ret.remove(current);
 				}
-				DirectoryFile to_be_deleted= new DirectoryFile(file);
-				String pm= path.substring(0,path.lastIndexOf("\\"));
-				for(DirectoryFile fil: files){
-					if((fil.get_file_name()+"."+fil.get_type()).equals(name)){
-						files.remove(fil);
-						//files.add(to_be_deleted);
-						break;				
-					}
+				filesInsideFolders.put(pm, ret);
+			}
+			else if(typeOfEvent == 11) {
+				ArrayList<DirectoryFile> temp = filesInsideFolders.get(path);
+				deleteFolder(temp,path,name);
+				String pm= path.substring(0,path.indexOf(name)-1);			
+				ArrayList<DirectoryFile> ret = filesInsideFolders.get(pm);
+				for(DirectoryFile current : ret) {
+					if(current.get_file_name().equals(name))
+						ret.remove(current);
 				}
-				ArrayList<DirectoryFile> ret = folder_to_files.get(pm);
-				ret.remove(to_be_deleted);
-				folder_to_files.put(pm, ret);
+
 			}
 		}
 		catch(Exception e) {
+			System.err.println(e);
 		}
+	}
+	
+	
+	/**
+	 * this funstion deleted all the subfolders and files from the map when a folder is deleted from memory.
+	 * @param temp
+	 * @param path
+	 * @param name
+	 */
+	private void deleteFolder(ArrayList<DirectoryFile> temp, String path, String name) {
+		System.out.println("Delete Folder: "+name+" Path: "+path);
+		for(DirectoryFile f :temp ) {
+			if(f.get_type().equals("Folder")) {
+				String newPath=path.substring(0, path.indexOf(name)-1);
+				deleteFolder(filesInsideFolders.get(newPath),newPath,newPath.substring(newPath.lastIndexOf("//")+1));
+			}
+		}
+		System.out.println("Deleted Folder: "+name+" Path: "+path);
+	}
+
+
+	/**
+	 * this funstion deleted all the subfolders and files from the map when a folder is deleted from memory.
+	 * @param temp
+	 * @param path
+	 * @param name
+	 */
+	private void deleteFolder(ArrayList<DirectoryFile> temp, String path, String name) {
+		System.out.println("Delete Folder: "+name+" Path: "+path);
+		for(DirectoryFile f :temp ) {
+			if(f.get_type().equals("Folder")) {
+				String newPath=path.substring(0, path.indexOf(name)-1);
+				deleteFolder(filesInsideFolders.get(newPath),newPath,newPath.substring(newPath.lastIndexOf("//")+1));
+			}
+		}
+		System.out.println("Deleted Folder: "+name+" Path: "+path);
 	}
 
 }
-
-
-
-
-
