@@ -1,0 +1,4 @@
+https://www.journaldev.com/927/objectoutputstream-java-write-object-file
+
+
+https://coderanch.com/t/276770/java/append-retrieve-serialized-objects-file
